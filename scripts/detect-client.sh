@@ -27,13 +27,29 @@ esac
 # --- Client Detection ---
 
 # Transmission
-transmission_path=$(command -v transmission-remote 2>/dev/null || true)
+transmission_remote_path=$(command -v transmission-remote 2>/dev/null || true)
+transmission_gtk_path=$(command -v transmission-gtk 2>/dev/null || true)
+transmission_qt_path=$(command -v transmission-qt 2>/dev/null || true)
+transmission_daemon_path=$(command -v transmission-daemon 2>/dev/null || true)
+transmission_path="${transmission_remote_path:-${transmission_gtk_path:-${transmission_qt_path:-${transmission_daemon_path:-}}}}"
 transmission_installed="false"
 transmission_daemon="false"
+transmission_remote_available="false"
+transmission_variant="none"
 if [ -n "$transmission_path" ]; then
   transmission_installed="true"
-  if transmission-remote -l >/dev/null 2>&1; then
-    transmission_daemon="true"
+  if [ -n "$transmission_remote_path" ]; then
+    transmission_remote_available="true"
+    transmission_variant="cli"
+    if transmission-remote -l >/dev/null 2>&1; then
+      transmission_daemon="true"
+    fi
+  elif [ -n "$transmission_gtk_path" ]; then
+    transmission_variant="gtk"
+  elif [ -n "$transmission_qt_path" ]; then
+    transmission_variant="qt"
+  elif [ -n "$transmission_daemon_path" ]; then
+    transmission_variant="daemon"
   fi
 fi
 
@@ -65,6 +81,8 @@ cat <<EOF
     "transmission": {
       "installed": $transmission_installed,
       "path": $([ -n "$transmission_path" ] && echo "\"$transmission_path\"" || echo "null"),
+      "variant": "$transmission_variant",
+      "remoteAvailable": $transmission_remote_available,
       "daemonRunning": $transmission_daemon
     },
     "aria2": {
