@@ -43,6 +43,9 @@
           "audioCodec": "AAC",
           "hdrType": null,
           "releaseGroup": "YTS",
+          "isProper": false,
+          "isRepack": false,
+          "isRemastered": false,
           "season": null,
           "episode": null
         }
@@ -81,24 +84,79 @@ X-Api-Key-Id: tc_live_abc1
 - **Pro**: 1,000 req/min, 10,000 req/day (with API key)
 - **Internal**: Unlimited (with API key)
 
-## New Query Parameters
+## Search Query Parameters
 
 **Season & Episode Filtering:**
 - `season=1` — Filter by TV show season number
 - `episode=5` — Filter by episode number
 - Note: Also supports parsing from query text (e.g., `q=breaking+bad+S01E05`)
 
+**Audio & Video Quality:**
+- `audio=atmos` — Filter by audio codec (aac, flac, opus, atmos)
+- `hdr=dolby_vision` — Filter by HDR format (hdr10, dolby_vision, hdr10plus, hlg)
+- `quality=2160p` — Filter by resolution (480p, 720p, 1080p, 2160p)
+
 **Localization:**
 - `locale=es` — Get titles in Spanish (also: fr, de, pt, it, ja, ko, zh, ru, ar)
 
-## New Response Fields
+## Response Fields
 
 **Content fields:**
 - `hasTorrents` (boolean) — Whether content has associated torrents
 - `maxSeeders` (number) — Highest seeder count across all torrents for this content
+- `backdropUrl` (string) — TMDB backdrop image URL
+- `contentUrl` (string) — Relative URL for content detail page
 
 **Torrent fields:**
 - `scrapedAt` (string, ISO 8601) — Timestamp of last tracker scrape for real-time seeder/leecher counts
+- `uploadedAt` (string, ISO 8601) — When the torrent was first uploaded
+- `releaseGroup` (string) — Release group name (e.g., "YTS", "RARBG")
+- `isProper` (boolean) — Whether this is a PROPER release (fix for previous release issues)
+- `isRepack` (boolean) — Whether this is a REPACK (re-packaged due to issues)
+- `isRemastered` (boolean) — Whether this is a remastered release
+
+## Credits Response Schema
+
+```json
+{
+  "contentId": 1,
+  "director": "Christopher Nolan",
+  "cast": [
+    {
+      "name": "Leonardo DiCaprio",
+      "character": "Cobb",
+      "profileUrl": "https://image.tmdb.org/t/p/w185/..."
+    }
+  ]
+}
+```
+
+Returns `contentId`, director name, and up to 10 cast members. Param: `id` (path, required)
+
+## Track Request Schema
+
+```json
+{
+  "infoHash": "aaf1e71c0a0e3b1c0f1a2b3c4d5e6f7a8b9c0d1e",
+  "action": "magnet"
+}
+```
+
+Method: **POST**. Actions: `magnet`, `torrent_download`, `copy`. Response: `{"ok": true}`
+
+## Search Analytics Response Schema
+
+```json
+{
+  "period": { "days": 7, "since": "2026-02-06T00:00:00Z" },
+  "summary": { "totalSearches": 15420, "uniqueQueries": 8730, "avgResults": 12.3, "zeroResultSearches": 120, "webSearches": 10000, "apiSearches": 5420 },
+  "topQueries": [{ "query": "dune", "count": 342, "avgResults": 15.2 }],
+  "zeroResultQueries": [{ "query": "obscure title", "count": 5 }],
+  "dailyVolume": [{ "date": "2026-02-13", "total": 2200, "web": 1500, "api": 700 }]
+}
+```
+
+Params: `days` (1-90, default 7), `limit` (1-100, default 20). **Requires pro tier API key.**
 
 ## Error Responses
 
@@ -115,8 +173,13 @@ X-Api-Key-Id: tc_live_abc1
 |----------|-------|
 | /api/v1/search | 30/min |
 | /api/v1/autocomplete | 60/min |
+| /api/v1/popular | 30/min |
+| /api/v1/recent | 30/min |
+| /api/v1/content/{id}/credits | 30/min |
 | /api/v1/stats | 10/min |
 | /api/v1/torrent | 20/min |
+| /api/v1/track | 60/min |
+| /api/v1/search-analytics | 10/min |
 
 ## Torrent Download Integration
 

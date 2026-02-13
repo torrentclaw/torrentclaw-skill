@@ -2,7 +2,7 @@
 name: torrentclaw
 description: Search and download torrents via TorrentClaw. Use when the user asks to find, search, or download movies, TV shows, or torrents. Detects local torrent clients (Transmission, aria2) and adds magnets directly, or offers magnet link copy and .torrent file download. Supports filtering by type (movie/show), genre, year, quality (480p-2160p), rating, language, and season/episode (S01E05, 1x05). Features API key authentication with tiered rate limits, AI-verified matching, and quality scoring (0-100). Returns titles with posters, ratings, and torrents with magnet links and quality scores.
 license: MIT
-metadata: {"version": "0.1.13", "repository": "https://github.com/torrentclaw/torrentclaw-skill", "homepage": "https://torrentclaw.com", "openclaw": {"emoji": "🎬", "os": ["darwin", "linux", "win32"]}}
+metadata: {"version": "0.1.13", "repository": "https://github.com/torrentclaw/torrentclaw-skill", "homepage": "https://torrentclaw.com", "openclaw": {"emoji": "🎬", "os": ["darwin", "linux", "win32"], "requires": {"bins": ["curl", "bash", "jq"], "env": ["TORRENTCLAW_API_KEY"]}, "primaryEnv": "TORRENTCLAW_API_KEY"}, "tags": ["torrent", "movies", "tv-shows", "download", "media", "entertainment", "magnet", "transmission", "aria2", "search", "4k", "hdr"]}
 ---
 
 # TorrentClaw
@@ -44,6 +44,8 @@ curl -s -H "x-search-source: skill" "https://torrentclaw.com/api/v1/search?q=QUE
 - `year_min=2020&year_max=2025`
 - `min_rating=7`
 - `lang=es` (ISO 639 language code)
+- `audio=atmos` (also: aac, flac, opus)
+- `hdr=dolby_vision` (also: hdr10, hdr10plus, hlg)
 - `season=1` — Filter by TV show season
 - `episode=5` — Filter by episode number
 - `locale=es` — Get titles in Spanish (also: fr, de, pt, it, ja, ko, zh, ru, ar)
@@ -101,13 +103,13 @@ Recommend **Transmission** for Linux/macOS (lightweight daemon, simple CLI) and 
 
 Main search endpoint. Required: `q` (query string).
 
-**Filters:** `type` (movie/show), `genre`, `year_min`, `year_max`, `min_rating` (0-10), `quality` (480p/720p/1080p/2160p), `lang` (ISO 639), `availability` (all/available/unavailable).
+**Filters:** `type` (movie/show), `genre`, `year_min`, `year_max`, `min_rating` (0-10), `quality` (480p/720p/1080p/2160p), `lang` (ISO 639), `audio` (aac/flac/opus/atmos), `hdr` (hdr10/dolby_vision/hdr10plus/hlg).
 
 **Sorting:** `sort` = relevance | seeders | year | rating | added
 
 **Pagination:** `page` (1-1000), `limit` (1-50, default 20)
 
-**Response:** `{ total, page, pageSize, results: [{ id, imdbId, tmdbId, contentType, title, year, overview, posterUrl, genres, ratingImdb, ratingTmdb, hasTorrents, maxSeeders, torrents: [{ infoHash, magnetUrl, torrentUrl, quality, codec, sourceType, sizeBytes, seeders, leechers, source, qualityScore, scrapedAt, languages, audioCodec, hdrType }] }] }`
+**Response:** `{ total, page, pageSize, results: [{ id, imdbId, tmdbId, contentType, title, year, overview, posterUrl, backdropUrl, genres, ratingImdb, ratingTmdb, contentUrl, hasTorrents, maxSeeders, torrents: [{ infoHash, magnetUrl, torrentUrl, quality, codec, sourceType, sizeBytes, seeders, leechers, source, qualityScore, scrapedAt, uploadedAt, languages, audioCodec, hdrType, releaseGroup, isProper, isRepack, isRemastered, season, episode }] }] }`
 
 **New fields:**
 - `hasTorrents` (boolean) — Whether content has any associated torrents
@@ -120,11 +122,11 @@ Fast typeahead. Param: `q` (min 2 chars). Returns max 8 suggestions.
 
 ### Popular — `GET /api/v1/popular`
 
-Trending content by seeders. Params: `limit` (1-24), `page`.
+Trending content by seeders. Params: `limit` (1-24, default 12), `page`.
 
 ### Recent — `GET /api/v1/recent`
 
-Recently added content. Params: `limit` (1-24), `page`.
+Recently added content. Params: `limit` (1-24, default 12), `page`.
 
 ### Torrent File — `GET /api/v1/torrent/{infoHash}`
 
@@ -134,25 +136,34 @@ Download .torrent file by 40-char hex info hash. Returns binary `application/x-b
 
 Content/torrent counts and recent ingestion history. No params.
 
-### Content Details — `GET /api/v1/content/:id`
+### Credits — `GET /api/v1/content/{id}/credits`
 
-Full metadata for a specific movie or show. Returns complete content object with all torrents, cast, crew, and metadata.
+Director and top 10 cast members with character names.
 
-### Track — `GET /api/v1/track`
+**Params:** `id` (path, required — content ID from search)
 
-Analytics tracking endpoint. Params: `contentId` (required), `type` (view/click/download).
+**Response:** `{ contentId, director: "name", cast: [{ name, character, profileUrl }] }`
+
+**Usage:** Show cast info when the user asks "who's in this movie?" or wants details about a search result.
+
+### Track — `POST /api/v1/track`
+
+Record user interactions for popularity ranking. Call this after the user selects a torrent.
+
+**Request body (JSON):**
+```json
+{"infoHash": "40-char hex", "action": "magnet|torrent_download|copy"}
+```
+
+**Response:** `{"ok": true}`
 
 ### Search Analytics — `GET /api/v1/search-analytics`
 
-Popular searches and trending queries. **Requires API key with pro tier.**
+Search volume, top queries, and zero-result queries by period. **Requires API key with pro tier.**
 
-### Cache Stats — `GET /api/v1/cache-stats`
+**Params:** `days` (1-90, default 7), `limit` (1-100, default 20)
 
-Search cache metrics and performance stats. No params.
-
-### Enrichment Stats — `GET /api/v1/enrichment-stats`
-
-TMDB enrichment progress and coverage statistics. No params.
+**Response:** `{ period, summary, topQueries, zeroResultQueries, dailyVolume }`
 
 ## Season & Episode Search
 
@@ -248,12 +259,29 @@ curl -H "Authorization: Bearer tc_live_xxxxx" \
 
 **Find popular sci-fi movies:**
 ```bash
-curl "https://torrentclaw.com/api/v1/search?genre=science-fiction&type=movie&sort=seeders"
+curl "https://torrentclaw.com/api/v1/search?genre=Science%20Fiction&type=movie&sort=seeders"
 ```
 
-**Track content view for analytics:**
+**Find Dolby Vision / HDR content:**
 ```bash
-curl "https://torrentclaw.com/api/v1/track?contentId=123&type=view"
+curl "https://torrentclaw.com/api/v1/search?q=dune&hdr=dolby_vision&quality=2160p"
+```
+
+**Find Atmos audio torrents:**
+```bash
+curl "https://torrentclaw.com/api/v1/search?q=oppenheimer&audio=atmos"
+```
+
+**Get cast info for a movie:**
+```bash
+curl "https://torrentclaw.com/api/v1/content/42/credits"
+```
+
+**Track torrent selection (call after user picks a torrent):**
+```bash
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"infoHash":"aaf1e71c...","action":"magnet"}' \
+  "https://torrentclaw.com/api/v1/track"
 ```
 
 ## Troubleshooting
