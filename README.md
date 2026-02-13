@@ -4,23 +4,24 @@
 **License:** MIT
 **Homepage:** https://torrentclaw.com
 
-Agent Skill for searching and downloading torrents via [TorrentClaw](https://torrentclaw.com).
+Search and download movies and TV shows from 30+ torrent sources directly from your AI agent. TorrentClaw aggregates torrents from YTS, EZTV, Knaben, Prowlarr, Bitmagnet, Torrentio, DonTorrent, Torrents.csv and more — enriched with TMDB metadata, quality scoring, and multi-language support.
 
-Compatible with Claude Code, OpenClaw, Codex CLI, Cline, Roo Code, and any tool supporting the [Agent Skills](https://agentskills.io) specification.
+Compatible with **Claude Code**, **OpenClaw**, **Codex CLI**, **Cline**, **Roo Code**, and any tool supporting the [Agent Skills](https://agentskills.io) specification.
 
 **Alternative:** For Claude Desktop, Cursor, or Windsurf, use the [MCP Server](https://torrentclaw.com/mcp) instead (`npx @torrentclaw/mcp`).
 
 ## Features
 
-- Search movies and TV shows across 12+ torrent sources (YTS, EZTV, Knaben, Prowlarr, Bitmagnet, Torrentio, DonTorrent, Torrents.csv, and more)
-- Filter by quality (480p-2160p), genre, year, rating, language, season/episode (S01E05, 1x05)
-- API key authentication for higher rate limits (120 req/min free, 1K req/min pro)
-- Quality scoring (0-100) based on resolution, codec, seeders, source trust
+- Search movies and TV shows across 30+ torrent sources (YTS, EZTV, Knaben, Prowlarr, Bitmagnet, Torrentio, DonTorrent, Torrents.csv, and more)
+- Filter by quality (480p–2160p), genre, year, rating, language, audio codec, HDR format, season/episode
+- HDR and Dolby Vision filtering (hdr10, dolby_vision) and audio codec filtering (AAC, FLAC, Opus, Atmos)
+- Quality scoring (0–100) based on resolution, codec, seeders, source trust
 - Multi-language support (11 languages with accent-insensitive search)
-- Detect installed torrent clients (Transmission, aria2)
-- Add magnet links directly to your torrent client
+- TMDB metadata enrichment: posters, backdrops, genres, cast, director credits
+- Detect installed torrent clients (Transmission, aria2) and add magnets directly
 - Download .torrent files or copy magnet links
-- OS-specific installation guides for torrent clients
+- OS-specific installation guides for torrent clients (Linux, macOS, Windows/WSL)
+- API key authentication for higher rate limits (anonymous 30/min, free 120/min, pro 1K/min)
 
 ## Install
 
@@ -64,7 +65,7 @@ Or just ask naturally:
 
 The skill will:
 1. Detect your torrent client (Transmission, aria2)
-2. Search TorrentClaw across 12+ sources
+2. Search TorrentClaw across 30+ sources
 3. Present results ranked by quality score (0-100)
 4. Add best torrent to your client or provide magnet link
 5. Show install guide if no client detected
