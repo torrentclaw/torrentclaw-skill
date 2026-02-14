@@ -31,10 +31,17 @@ The script outputs JSON with detected clients and OS info. Remember the result f
 
 ### Step 2: Search for content
 
-Query the TorrentClaw API. Always include the `x-search-source: skill` header for analytics:
+Query the TorrentClaw API. Always include the `x-search-source: skill` header for analytics. The API key is **optional** — anonymous usage allows 30 req/min, which is enough for casual searches. Only include the `Authorization` header if `$TORRENTCLAW_API_KEY` is set:
 
 ```bash
 curl -s -H "x-search-source: skill" "https://torrentclaw.com/api/v1/search?q=QUERY&sort=seeders&limit=5"
+```
+
+If the user has configured an API key for higher rate limits:
+
+```bash
+curl -s -H "x-search-source: skill" -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+  "https://torrentclaw.com/api/v1/search?q=QUERY&sort=seeders&limit=5"
 ```
 
 **Useful filters** (append as query params):
@@ -191,7 +198,7 @@ The API automatically detects episode patterns in queries and filters results ac
 
 ## API Authentication
 
-TorrentClaw supports optional API key authentication for higher rate limits.
+The API works without authentication (30 req/min anonymous tier). An API key is **only needed** if you require higher rate limits for heavy or automated usage.
 
 **Rate Limit Tiers:**
 
@@ -204,13 +211,11 @@ TorrentClaw supports optional API key authentication for higher rate limits.
 
 **Using an API key:**
 
-```bash
-# Via header (recommended)
-curl -H "Authorization: Bearer tc_live_xxxxx" \
-  "https://torrentclaw.com/api/v1/search?q=dune"
+Always use the `$TORRENTCLAW_API_KEY` environment variable via the `Authorization` header. Avoid passing the key as a query parameter — query strings may be logged in server access logs and HTTP referrer headers.
 
-# Via query parameter
-curl "https://torrentclaw.com/api/v1/search?q=dune&api_key=tc_live_xxxxx"
+```bash
+curl -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+  "https://torrentclaw.com/api/v1/search?q=dune"
 ```
 
 **Rate limit headers in response:**
@@ -253,7 +258,7 @@ curl "https://torrentclaw.com/api/v1/search?q=entrevias+S01E05&locale=es"
 
 **Search with API key for higher rate limits:**
 ```bash
-curl -H "Authorization: Bearer tc_live_xxxxx" \
+curl -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
   "https://torrentclaw.com/api/v1/search?q=dune&quality=2160p"
 ```
 
