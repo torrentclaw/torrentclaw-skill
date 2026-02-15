@@ -73,24 +73,34 @@ elif [ "$aria2_installed" = "true" ]; then
 fi
 
 # --- JSON Output ---
-cat <<EOF
-{
-  "os": "$os_name",
-  "distro": "$distro",
-  "clients": {
-    "transmission": {
-      "installed": $transmission_installed,
-      "path": $([ -n "$transmission_path" ] && echo "\"$transmission_path\"" || echo "null"),
-      "variant": "$transmission_variant",
-      "remoteAvailable": $transmission_remote_available,
-      "daemonRunning": $transmission_daemon
+jq -n \
+  --arg os "$os_name" \
+  --arg distro "$distro" \
+  --argjson t_installed "$transmission_installed" \
+  --arg t_path "${transmission_path:-}" \
+  --arg t_variant "$transmission_variant" \
+  --argjson t_remote "$transmission_remote_available" \
+  --argjson t_daemon "$transmission_daemon" \
+  --argjson a_installed "$aria2_installed" \
+  --arg a_path "${aria2_path:-}" \
+  --argjson a_daemon "$aria2_daemon" \
+  --arg preferred "$preferred" \
+  '{
+    os: $os,
+    distro: $distro,
+    clients: {
+      transmission: {
+        installed: $t_installed,
+        path: (if $t_path == "" then null else $t_path end),
+        variant: $t_variant,
+        remoteAvailable: $t_remote,
+        daemonRunning: $t_daemon
+      },
+      aria2: {
+        installed: $a_installed,
+        path: (if $a_path == "" then null else $a_path end),
+        daemonRunning: $a_daemon
+      }
     },
-    "aria2": {
-      "installed": $aria2_installed,
-      "path": $([ -n "$aria2_path" ] && echo "\"$aria2_path\"" || echo "null"),
-      "daemonRunning": $aria2_daemon
-    }
-  },
-  "preferred": "$preferred"
-}
-EOF
+    preferred: $preferred
+  }'
