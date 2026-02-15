@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.16] - 2026-02-14
+
+### Security
+
+- Fix shell injection vulnerability in aria2 RPC JSON construction (add-torrent.sh)
+- Add magnet URL format validation before passing to torrent clients
+- Replace shell string interpolation with `jq --arg` for safe JSON construction
+- Refactor detect-client.sh JSON output to use `jq` instead of heredoc interpolation
+- Add CI security pattern check to prevent unsafe curl payload regression
+
 ## [0.1.13] - 2026-02-13
 
 ### Features
