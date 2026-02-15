@@ -51,3 +51,21 @@ jobs:
 
       - name: Run ShellCheck
         run: shellcheck scripts/*.sh
+
+  security-check:
+    name: Security patterns check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for unsafe string interpolation in curl payloads
+        run: |
+          # Flag inline JSON in double quotes (allows shell interpolation).
+          # Safe patterns: curl -d '{}' (single quotes) or curl -d "$var" (pre-built payload).
+          if grep -rPn 'curl.*-d\s*"[{]' scripts/*.sh; then
+            echo ""
+            echo "ERROR: Found curl -d with inline JSON in double quotes."
+            echo "Use jq --arg to build JSON safely and pass via variable."
+            exit 1
+          fi
+          echo "No unsafe curl patterns found."

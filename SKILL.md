@@ -2,7 +2,7 @@
 name: torrentclaw
 description: Search and download torrents via TorrentClaw. Use when the user asks to find, search, or download movies, TV shows, or torrents. Detects local torrent clients (Transmission, aria2) and adds magnets directly, or offers magnet link copy and .torrent file download. Supports filtering by type (movie/show), genre, year, quality (480p-2160p), rating, language, and season/episode (S01E05, 1x05). Features API key authentication with tiered rate limits, AI-verified matching, and quality scoring (0-100). Returns titles with posters, ratings, and torrents with magnet links and quality scores.
 license: MIT
-metadata: {"version": "0.1.13", "repository": "https://github.com/torrentclaw/torrentclaw-skill", "homepage": "https://torrentclaw.com", "openclaw": {"emoji": "🎬", "os": ["darwin", "linux", "win32"], "requires": {"bins": ["curl", "bash", "jq"], "env": ["TORRENTCLAW_API_KEY"]}, "primaryEnv": "TORRENTCLAW_API_KEY"}, "tags": ["torrent", "movies", "tv-shows", "download", "media", "entertainment", "magnet", "transmission", "aria2", "search", "4k", "hdr"]}
+metadata: {"version": "0.1.16", "repository": "https://github.com/torrentclaw/torrentclaw-skill", "homepage": "https://torrentclaw.com", "openclaw": {"emoji": "🎬", "os": ["darwin", "linux", "win32"], "requires": {"bins": ["curl", "bash", "jq"], "env": ["TORRENTCLAW_API_KEY"]}, "primaryEnv": "TORRENTCLAW_API_KEY"}, "tags": ["torrent", "movies", "tv-shows", "download", "media", "entertainment", "magnet", "transmission", "aria2", "search", "4k", "hdr"]}
 ---
 
 # TorrentClaw

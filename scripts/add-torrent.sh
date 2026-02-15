@@ -44,6 +44,13 @@ if [ -z "$magnet_url" ]; then
   exit 1
 fi
 
+# --- Validate magnet URL format ---
+if [[ ! "$magnet_url" =~ ^magnet:\?xt=urn:btih:[a-fA-F0-9]{40} ]] && \
+   [[ ! "$magnet_url" =~ ^magnet:\?xt=urn:btih:[a-zA-Z2-7]{32} ]]; then
+  echo "Error: Invalid magnet URL format. Expected: magnet:?xt=urn:btih:<hash>" >&2
+  exit 1
+fi
+
 # --- Auto-detect client if not specified ---
 if [ -z "$client" ]; then
   if command -v transmission-remote >/dev/null 2>&1; then
@@ -76,11 +83,14 @@ case "$client" in
     # Check if aria2 RPC is running
     if curl -sf http://localhost:6800/jsonrpc -d '{"jsonrpc":"2.0","id":"test","method":"aria2.getVersion"}' >/dev/null 2>&1; then
       echo "Adding to aria2 via RPC..."
-      dir_param=""
       if [ -n "$download_dir" ]; then
-        dir_param=",{\"dir\":\"$download_dir\"}"
+        payload=$(jq -n --arg url "$magnet_url" --arg dir "$download_dir" \
+          '{"jsonrpc":"2.0","id":"add","method":"aria2.addUri","params":[[$url],{"dir":$dir}]}')
+      else
+        payload=$(jq -n --arg url "$magnet_url" \
+          '{"jsonrpc":"2.0","id":"add","method":"aria2.addUri","params":[[$url]]}')
       fi
-      result=$(curl -sf http://localhost:6800/jsonrpc -d "{\"jsonrpc\":\"2.0\",\"id\":\"add\",\"method\":\"aria2.addUri\",\"params\":[[\"$magnet_url\"]$dir_param]}")
+      result=$(curl -sf http://localhost:6800/jsonrpc -d "$payload")
       if echo "$result" | grep -q '"result"'; then
         echo "Torrent added to aria2 successfully."
       else
