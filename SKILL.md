@@ -2,7 +2,7 @@
 name: torrentclaw
 description: Search and download torrents via TorrentClaw. Use when the user asks to find, search, or download movies, TV shows, or torrents. Detects local torrent clients (Transmission, aria2) and adds magnets directly, or offers magnet link copy and .torrent file download. Supports filtering by type (movie/show), genre, year, quality (480p-2160p), rating, language, and season/episode (S01E05, 1x05). Features API key authentication with tiered rate limits, AI-verified matching, and quality scoring (0-100). Returns titles with posters, ratings, and torrents with magnet links and quality scores.
 license: MIT
-metadata: {"version": "0.1.16", "repository": "https://github.com/torrentclaw/torrentclaw-skill", "homepage": "https://torrentclaw.com", "openclaw": {"emoji": "🎬", "os": ["darwin", "linux", "win32"], "requires": {"bins": ["curl", "bash", "jq"], "env": ["TORRENTCLAW_API_KEY"]}, "primaryEnv": "TORRENTCLAW_API_KEY"}, "tags": ["torrent", "movies", "tv-shows", "download", "media", "entertainment", "magnet", "transmission", "aria2", "search", "4k", "hdr"]}
+metadata: {"version": "0.1.17", "repository": "https://github.com/torrentclaw/torrentclaw-skill", "homepage": "https://torrentclaw.com", "openclaw": {"emoji": "🎬", "os": ["darwin", "linux", "win32"], "requires": {"bins": ["curl", "bash", "jq"], "env": ["TORRENTCLAW_API_KEY"]}, "primaryEnv": "TORRENTCLAW_API_KEY"}, "tags": ["torrent", "movies", "tv-shows", "download", "media", "entertainment", "magnet", "transmission", "aria2", "search", "4k", "hdr"]}
 ---
 
 # TorrentClaw
@@ -31,17 +31,24 @@ The script outputs JSON with detected clients and OS info. Remember the result f
 
 ### Step 2: Search for content
 
-Query the TorrentClaw API. Always include the `x-search-source: skill` header for analytics. The API key is **optional** — anonymous usage allows 30 req/min, which is enough for casual searches. Only include the `Authorization` header if `$TORRENTCLAW_API_KEY` is set:
+Query the TorrentClaw API. Always include the `x-search-source: skill` header for analytics. The API key is **optional** — anonymous usage allows 30 req/min, which is enough for casual searches. Only include the `Authorization` header if `$TORRENTCLAW_API_KEY` is set.
+
+**Important:** Always use `--data-urlencode` for user-supplied values to prevent shell injection. Never interpolate user input directly into the URL string.
 
 ```bash
-curl -s -H "x-search-source: skill" "https://torrentclaw.com/api/v1/search?q=QUERY&sort=seeders&limit=5"
+curl -s -G -H "x-search-source: skill" \
+  --data-urlencode "q=QUERY" \
+  -d "sort=seeders" -d "limit=5" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 If the user has configured an API key for higher rate limits:
 
 ```bash
-curl -s -H "x-search-source: skill" -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
-  "https://torrentclaw.com/api/v1/search?q=QUERY&sort=seeders&limit=5"
+curl -s -G -H "x-search-source: skill" -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+  --data-urlencode "q=QUERY" \
+  -d "sort=seeders" -d "limit=5" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Useful filters** (append as query params):
@@ -186,12 +193,15 @@ TorrentClaw supports smart episode filtering with multiple formats:
 
 1. **In query text** (automatic parsing):
 ```bash
-curl "https://torrentclaw.com/api/v1/search?q=breaking+bad+S05E14"
+curl -s -G --data-urlencode "q=breaking bad S05E14" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 2. **With explicit parameters**:
 ```bash
-curl "https://torrentclaw.com/api/v1/search?q=breaking+bad&season=5&episode=14"
+curl -s -G --data-urlencode "q=breaking bad" \
+  -d "season=5" -d "episode=14" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 The API automatically detects episode patterns in queries and filters results accordingly.
@@ -214,8 +224,9 @@ The API works without authentication (30 req/min anonymous tier). An API key is 
 Always use the `$TORRENTCLAW_API_KEY` environment variable via the `Authorization` header. Avoid passing the key as a query parameter — query strings may be logged in server access logs and HTTP referrer headers.
 
 ```bash
-curl -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
-  "https://torrentclaw.com/api/v1/search?q=dune"
+curl -s -G -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+  --data-urlencode "q=dune" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Rate limit headers in response:**
@@ -253,28 +264,38 @@ Use `lang=es` filter.
 
 **Search for a specific TV episode:**
 ```bash
-curl "https://torrentclaw.com/api/v1/search?q=entrevias+S01E05&locale=es"
+curl -s -G --data-urlencode "q=entrevias S01E05" \
+  -d "locale=es" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Search with API key for higher rate limits:**
 ```bash
-curl -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
-  "https://torrentclaw.com/api/v1/search?q=dune&quality=2160p"
+curl -s -G -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+  --data-urlencode "q=dune" \
+  -d "quality=2160p" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Find popular sci-fi movies:**
 ```bash
-curl "https://torrentclaw.com/api/v1/search?genre=Science%20Fiction&type=movie&sort=seeders"
+curl -s -G --data-urlencode "genre=Science Fiction" \
+  -d "type=movie" -d "sort=seeders" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Find Dolby Vision / HDR content:**
 ```bash
-curl "https://torrentclaw.com/api/v1/search?q=dune&hdr=dolby_vision&quality=2160p"
+curl -s -G --data-urlencode "q=dune" \
+  -d "hdr=dolby_vision" -d "quality=2160p" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Find Atmos audio torrents:**
 ```bash
-curl "https://torrentclaw.com/api/v1/search?q=oppenheimer&audio=atmos"
+curl -s -G --data-urlencode "q=oppenheimer" \
+  -d "audio=atmos" \
+  "https://torrentclaw.com/api/v1/search"
 ```
 
 **Get cast info for a movie:**

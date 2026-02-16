@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.17] - 2026-02-16
+
+### Security
+
+- Fix shell injection vulnerability in SKILL.md curl search commands
+- Replace direct URL interpolation with `curl -G --data-urlencode` for all user-supplied query parameters
+- Add explicit instruction to never interpolate user input directly into URL strings
+- Update all curl examples (search, episode, common patterns, auth) to use safe parameter encoding
+
 ## [0.1.16] - 2026-02-14
 
 ### Security
