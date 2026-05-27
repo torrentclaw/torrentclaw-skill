@@ -12,9 +12,14 @@ permissions:
 jobs:
   lint-commits:
     name: Lint commits
-    runs-on: ubuntu-latest
+    runs-on: docker
+    container:
+      image: docker.io/library/ubuntu:24.04
     if: github.event_name == 'pull_request'
     steps:
+      - name: Install git + grep
+        run: apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -45,8 +50,13 @@ jobs:
 
   lint-scripts:
     name: Lint shell scripts
-    runs-on: ubuntu-latest
+    runs-on: docker
+    container:
+      image: docker.io/library/ubuntu:24.04
     steps:
+      - name: Install shellcheck
+        run: apt-get update && apt-get install -y --no-install-recommends shellcheck git ca-certificates
+
       - uses: actions/checkout@v4
 
       - name: Run ShellCheck
@@ -54,8 +64,13 @@ jobs:
 
   security-check:
     name: Security patterns check
-    runs-on: ubuntu-latest
+    runs-on: docker
+    container:
+      image: docker.io/library/ubuntu:24.04
     steps:
+      - name: Install grep + git
+        run: apt-get update && apt-get install -y --no-install-recommends git grep ca-certificates
+
       - uses: actions/checkout@v4
 
       - name: Check for unsafe string interpolation in curl payloads
