@@ -31,7 +31,7 @@ The script outputs JSON with detected clients and OS info. Remember the result f
 
 ### Step 2: Search for content
 
-Query the TorrentClaw API. Always include the `x-search-source: skill` header for analytics. The API key is **optional** — anonymous usage allows 30 req/min, which is enough for casual searches. Only include the `Authorization` header if `$TORRENTCLAW_API_KEY` is set.
+Query the TorrentClaw API. Always include the `x-search-source: skill` header for analytics. The API key is **optional** — anonymous usage allows 30 req/min, which is enough for casual searches. Only include the `Authorization` header if the user has an API key configured (see [API Authentication](#api-authentication)).
 
 **Important:** Always use `--data-urlencode` for user-supplied values to prevent shell injection. Never interpolate user input directly into the URL string.
 
@@ -42,10 +42,10 @@ curl -s -G -H "x-search-source: skill" \
   "https://torrentclaw.com/api/v1/search"
 ```
 
-If the user has configured an API key for higher rate limits:
+If the user has configured an API key for higher rate limits, send it via a config file so the key stays out of the command line (see [API Authentication](#api-authentication)):
 
 ```bash
-curl -s -G -H "x-search-source: skill" -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+curl -s -G -H "x-search-source: skill" --config ~/.torrentclaw-auth.conf \
   --data-urlencode "q=QUERY" \
   -d "sort=seeders" -d "limit=5" \
   "https://torrentclaw.com/api/v1/search"
@@ -221,10 +221,24 @@ The API works without authentication (30 req/min anonymous tier). An API key is 
 
 **Using an API key:**
 
-Always use the `$TORRENTCLAW_API_KEY` environment variable via the `Authorization` header. Avoid passing the key as a query parameter — query strings may be logged in server access logs and HTTP referrer headers.
+Store the auth header in a local config file so the key never appears in command lines or shell history. Avoid passing the key as a query parameter — query strings may be logged in server access logs and HTTP referrer headers.
+
+Create `~/.torrentclaw-auth.conf` with permissions `600` containing:
+
+```text
+header = "Authorization: Bearer <your-api-key>"
+```
+
+If the key is available as an environment variable, write the file once with:
 
 ```bash
-curl -s -G -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+printf 'header = "Authorization: Bearer %s"\n' "$TORRENTCLAW_API_KEY" > ~/.torrentclaw-auth.conf
+```
+
+Then pass the file to any request with `--config`:
+
+```bash
+curl -s -G --config ~/.torrentclaw-auth.conf \
   --data-urlencode "q=dune" \
   "https://torrentclaw.com/api/v1/search"
 ```
@@ -271,7 +285,7 @@ curl -s -G --data-urlencode "q=entrevias S01E05" \
 
 **Search with API key for higher rate limits:**
 ```bash
-curl -s -G -H "Authorization: Bearer $TORRENTCLAW_API_KEY" \
+curl -s -G --config ~/.torrentclaw-auth.conf \
   --data-urlencode "q=dune" \
   -d "quality=2160p" \
   "https://torrentclaw.com/api/v1/search"
@@ -300,7 +314,7 @@ curl -s -G --data-urlencode "q=oppenheimer" \
 
 **Get cast info for a movie:**
 ```bash
-curl "https://torrentclaw.com/api/v1/content/42/credits"
+curl -sS -f "https://torrentclaw.com/api/v1/content/42/credits"
 ```
 
 **Track torrent selection (call after user picks a torrent):**
